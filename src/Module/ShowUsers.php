@@ -2,8 +2,8 @@
 /**
  * Created by PhpStorm.
  * User: André
- * Date: 11-9-2016
- * Time: 19:41
+ * Date: 12-9-2016
+ * Time: 00:46
  */
 
 namespace RoomManager\Module;
@@ -14,7 +14,7 @@ use RoomManager\Core\Http\Request;
 use RoomManager\Core\Http\Response;
 use RoomManager\Core\SQL;
 
-class ShowLocations implements HttpResponse
+class ShowUsers implements HttpResponse
 {
     /**
      * @var SQL
@@ -28,7 +28,7 @@ class ShowLocations implements HttpResponse
 
     public function doGet(Request $request, Response $response)
     {
-        $response->setBody($this->sql->select("SELECT * FROM locations"));
+        $response->setBody($this->sql->select("SELECT user_id, username FROM users"));
     }
 
     public function doPost(Request $request, Response $response)

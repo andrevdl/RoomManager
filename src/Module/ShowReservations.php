@@ -40,4 +40,10 @@ class ShowReservations implements HttpResponse
 
         $response->setBody($data);
     }
+
+    public function doPost(Request $request, Response $response)
+    {
+        $response->setCode(400);
+        return;
+    }
 }

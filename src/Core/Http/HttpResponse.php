@@ -16,4 +16,6 @@ interface HttpResponse
     public function init(SQL $SQL);
 
     public function doGet(Request $request, Response $response);
+    
+    public function doPost(Request $request, Response $response);
 }
