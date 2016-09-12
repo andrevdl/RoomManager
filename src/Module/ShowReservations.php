@@ -35,8 +35,16 @@ class ShowReservations implements HttpResponse
             return;
         }
 
-        $room = $this->sql->prepare(["room_id" => $q["room"]], ["%d"]);
-        $data = $this->sql->select("SELECT * FROM Reservations WHERE room_id = ?", $room);
+        $statement = [
+            "room_id" => $q["room"],
+            "offset" => isset($q["offset"]) ? $q["offset"] : 0,
+            "limit" => isset($q["limit"]) ? $q["limit"] : 15,
+        ];
+
+        $filter = ["%d", "%d", "%d"];
+
+        $prepare = $this->sql->prepare($statement, $filter);
+        $data = $this->sql->select2("SELECT * FROM Reservations WHERE room_id = :room_id ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset", $filter, $prepare);
 
         $response->setBody($data);
     }

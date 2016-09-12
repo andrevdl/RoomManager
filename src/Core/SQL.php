@@ -144,8 +144,8 @@ class SQL
     }
 
     public function createCondition($condition, $conjunction = NULL, $compare = NULL, $whitespace = TRUE) {
-        $conjunction = $this->createConditionHelper($conjunction, "AND", count($condition) - 1);
-        $compare = $this->createConditionHelper($compare, "=", count($condition));
+        $conjunction = $this->createConditionHelper($conjunction, count($condition) - 1, "AND");
+        $compare = $this->createConditionHelper($compare, count($condition), "=");
 
         $output = "";
         $i = 0;
@@ -162,7 +162,7 @@ class SQL
         return $output;
     }
 
-    private function createConditionHelper($values, $default = null, $times) {
+    private function createConditionHelper($values, $times, $default = null) {
         $temp_values = [];
         if (!is_array($values)) {
             for ($i = 0; $i < $times; $i++) {
@@ -266,6 +266,60 @@ class SQL
         try {
             $STH = $this->DBH->prepare($statement);
             $STH->execute(array_values($values));
+            $this->rowCount = $STH->rowCount();
+            return $STH->fetchAll($fetch_style);
+        } catch (PDOException $ex) {
+            $this->error($ex->getMessage());
+        }
+
+        return null;
+    }
+
+    private function bindParams(\PDOStatement $statement, $format, array $values = []) {
+        if (!is_array($format)) {
+            foreach ($values as $key => $item){
+                $this->bindParam($statement, $key, $item, $format);
+            }
+        }
+        else {
+            $i = 0;
+            foreach ($values as $key => $item){
+                isset($format[$i]) ? $this->bindParam($statement, $key, $item, $format[$i]) : $this->bindParam($statement, $key, $item, NULL);
+                $i++;
+            }
+        }
+    }
+
+    private function bindParam(\PDOStatement $statement, $key, $value, $format) {
+        switch ($format){
+            case '%b':
+                $type = PDO::PARAM_BOOL;
+                break;
+            case '%n':
+                $type = PDO::PARAM_NULL;
+                break;
+            case '%d':
+                $value = intval($value);
+                $type = PDO::PARAM_INT;
+                break;
+            case '%l':
+                $type = PDO::PARAM_LOB;
+                break;
+            case '%s':
+            default :
+                $type = PDO::PARAM_STR;
+                break;
+        }
+
+        $statement->bindParam(":" . $key, $value, $type);
+    }
+
+    public function select2($statement, $format, array $values = [], $fetch_style = PDO::FETCH_ASSOC){
+        try {
+            $STH = $this->DBH->prepare($statement);
+            $this->bindParams($STH, $format, $values);
+            $STH->execute();
+
             $this->rowCount = $STH->rowCount();
             return $STH->fetchAll($fetch_style);
         } catch (PDOException $ex) {

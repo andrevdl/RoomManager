@@ -29,19 +29,12 @@ class ErrorHandler
 
     public function database($message, $critical, $hide) {
         if ($hide) {
-            // log output
-
-//            if ($critical) {
-//                die();
-//            }
+            // log
 
             $this->response->setCode(500);
-        } elseif ($critical) {
-            $this->response->setCode(500);
-//            die($message);
         } else {
+            $this->response->setBody($message);
             $this->response->setCode(500);
-//            echo($message);
         }
 
         $this->response->send();
