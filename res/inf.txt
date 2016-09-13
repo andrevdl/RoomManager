@@ -1,0 +1,24 @@
+[get]
+/users => (search)
+/user => user, (offset), (limit)
+/invites => reservation, (search)
+
+===========
+
+[get] (edit)
+/room => search, size ==> in database structuur mist ruimte grote
+
+[get] (exists)
+/reservations => room, ({offset, limit}, {(day), month, year})
+/locations
+/rooms => location_id
+
+===========
+
+[post]
+/reserve => room, start, date, end, description, (ids)
+/invite => reservation, ids
+/revoke => reservation    [reservering terugtrekken]
+/decline => reservation   [uitnodiging weigeren]
+/login => username, password
+?? /logout ??
