@@ -28,7 +28,20 @@ class ShowUsers implements HttpResponse
 
     public function doGet(Request $request, Response $response)
     {
-        $response->setBody($this->sql->select("SELECT user_id, username FROM users"));
+        $q = $request->getQuery();
+
+        $statement = [
+            "username" => $q["search"],
+        ];
+
+        $filter = ["%s"];
+        $prepare = $this->sql->prepare($statement, $filter);
+        $prepare["username"] = "%" . $prepare["username"] . "%";
+
+        $response->setBody($this->sql->select2("SELECT user_id, username FROM users WHERE username LIKE :username",
+            $filter,
+            $prepare
+        ));
     }
 
     public function doPost(Request $request, Response $response)

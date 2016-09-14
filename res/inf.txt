@@ -5,14 +5,11 @@
 
 ===========
 
-[get] (edit)
-/room => search, size ==> in database structuur mist ruimte grote
-
 [get] (exists)
 /reservations => room, ({offset, limit}, {(day), month, year})
 /locations
-/rooms => location_id
-
+/rooms => location_id (search), (size)
+/room => room
 ===========
 
 [post]

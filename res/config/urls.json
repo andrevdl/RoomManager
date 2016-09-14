@@ -2,5 +2,6 @@
   "/rooms" : "%MODULE%\\ShowRooms",
   "/locations" : "%MODULE%\\ShowLocations",
   "/reservations" : "%MODULE%\\ShowReservations",
-  "/users" : "%MODULE%\\ShowUsers"
+  "/users" : "%MODULE%\\ShowUsers",
+  "/user" : "%MODULE%\\ShowUser"
 }
