@@ -3,6 +3,9 @@
   "/rooms" : "%MODULE%\\ShowRooms",
   "/locations" : "%MODULE%\\ShowLocations",
   "/reservations" : "%MODULE%\\ShowReservations",
+  "/reserve" : "%MODULE%\\RoomReserve",
+  "/invite" : "%MODULE%\\ReservationInvite",
+  "/revoke" : "%MODULE%\\ReservationRevoke",
   "/users" : "%MODULE%\\ShowUsers",
   "/user" : "%MODULE%\\ShowUser"
 }
