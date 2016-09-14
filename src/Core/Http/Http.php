@@ -3,6 +3,7 @@
 namespace RoomManager\Core\Http;
 
 use RoomManager\Core\Config\ConfigManager;
+use RoomManager\Core\Security\AES;
 use RoomManager\Core\SQL;
 
 class Http
@@ -13,14 +14,16 @@ class Http
     
     private $handler;
 
+    private $config;
+
     public function __construct()
     {
         $this->request = new Request();
         $this->response = new Response();
 
-        $m = new ConfigManager();
+        $this->config = new ConfigManager();
         
-        $urls = $m->getConfig("urls");
+        $urls = $this->config->getConfig("urls");
 
         $c = "";
         foreach ($urls as $url => $class) {
@@ -45,9 +48,17 @@ class Http
     }
 
     public function execute(SQL $SQL) {
-        $this->handler->init($SQL);
-        
         $resp = new Response();
+
+        // security
+        $c = $this->config->getConfig("api");
+        $q = $this->request->getQuery();
+        if (isset($q["data"])) {
+            $aes = new AES($q["data"], $c["client"], 256, AES::M_ECB);
+            $message = $aes->decrypt();
+        }
+
+        $this->handler->init($SQL);
         $resp->setCode(200);
         
         switch ($_SERVER['REQUEST_METHOD']) {
