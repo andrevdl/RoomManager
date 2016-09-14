@@ -54,6 +54,9 @@ class Http
             case "GET":
                  $this->handler->doGet($this->request, $resp);
                 break;
+            case "POST":
+                $this->handler->doPost($this->request, $resp);
+                break;
             default:
                 // error
                 break;

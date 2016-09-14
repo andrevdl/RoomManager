@@ -2,10 +2,6 @@
 /users => (search)
 /user => user, (offset), (limit)
 /invites => reservation, (search)
-
-===========
-
-[get] (exists)
 /reservations => room, ({offset, limit}, {(day), month, year})
 /locations
 /rooms => location_id (search), (size)

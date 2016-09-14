@@ -17,6 +17,11 @@ use RoomManager\Core\SQL;
 class ShowRoom implements HttpResponse
 {
 
+    /**
+     * @var SQL
+     */
+    private $sql;
+
     public function init(SQL $SQL)
     {
         $this->sql = $SQL;
@@ -27,22 +32,20 @@ class ShowRoom implements HttpResponse
         //todo fix this
         $q = $request->getQuery();
 
-        if (!isset($q["user"])) {
+        if (!isset($q["room"])) {
             $response->setCode(400);
             return;
         }
 
         $statement = [
-            "user_id" => $q["user"],
-            "offset" => isset($q["offset"]) ? $q["offset"] : 0,
-            "limit" => isset($q["limit"]) ? $q["limit"] : 15,
+            "room_id" => $q["room"],
         ];
 
-        $filter = ["%d", "%d", "%d"];
+        $filter = ["%d"];
 
         $prepare = $this->sql->prepare($statement, $filter);
         $data = $this->sql->select2(
-            "SELECT * FROM Reservations r INNER JOIN invites i WHERE r.user_id = :user_id OR i.user_id = :user_id ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset",
+            "SELECT * FROM Rooms WHERE room_id = :room_id",
             $filter,
             $prepare
         );

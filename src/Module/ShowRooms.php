@@ -29,16 +29,35 @@ class ShowRooms implements HttpResponse
     public function doGet(Request $request, Response $response)
     {
         $q = $request->getQuery();
+        $sqlStr = "SELECT * FROM Rooms WHERE location_id = :location_id AND name = :name ";
 
         if (!isset($q["location"])) {
             $response->setCode(400);
             return;
         }
 
-        $location = $this->sql->prepare(["location_id" => $q["location"]], ["%d"]);
-        $data = $this->sql->select("SELECT * FROM Rooms WHERE location_id = ?", $location);
+        $statement = [
+            "location_id" => $q["location"],
+            "name" => isset($q["search"]) ? $q["search"] : "",
+        ];
 
-        $response->setBody($data);
+        if (isset($q["size"])) {
+            $statement["size"] = $q["size"];
+            $sqlStr .= "AND size = :size";
+        }
+
+        $filter = ["%d", "%s", "%d"];
+
+        $prepare = $this->sql->prepare($statement, $filter);
+        $prepare["search"] = "%" . $prepare["search"] . "%";
+        if (isset($q["size"])) {
+            $prepare["size"] = "%" . $prepare["size"] . "%";
+        }
+
+        $response->setBody($data = $this->sql->select2($sqlStr,
+            $filter,
+            $prepare
+        ));
     }
 
     public function doPost(Request $request, Response $response)

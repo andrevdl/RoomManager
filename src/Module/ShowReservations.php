@@ -16,6 +16,10 @@ use RoomManager\Core\SQL;
 
 class ShowReservations implements HttpResponse
 {
+    const DATE = 0;
+
+    const SET = 1;
+
     /**
      * @var SQL
      */
@@ -29,24 +33,53 @@ class ShowReservations implements HttpResponse
     public function doGet(Request $request, Response $response)
     {
         $q = $request->getQuery();
-
-        if (!isset($q["room"])) {
-            $response->setCode(400);
-            return;
-        }
+        $sqlStr = "SELECT * FROM Reservations WHERE room_id = :room_id";
 
         $statement = [
             "room_id" => $q["room"],
-            "offset" => isset($q["offset"]) ? $q["offset"] : 0,
-            "limit" => isset($q["limit"]) ? $q["limit"] : 15,
         ];
+        $filter = ["%d"];
 
-        $filter = ["%d", "%d", "%d"];
+
+        switch ($this->check($q)) {
+            case 0:
+                $sqlStr .= "ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset";
+                $statement["offset"] =isset($q["offset"]) ? $q["offset"] : 0;
+                $statement["limit"] =isset($q["limit"]) ? $q["limit"] : 15;
+                array_merge($filter, ["%d", "%d"]);
+                break;
+            case 1:
+                $sqlStr .= "AND date = :date";
+                $statement["date"] = sprintf("%s-%s-%s", $q["year"], $q["month"], $q["day"]);
+                $filter[] =  "%s";
+                break;
+            default:
+                $response->setCode(400);
+                return;
+        }
 
         $prepare = $this->sql->prepare($statement, $filter);
-        $data = $this->sql->select2("SELECT * FROM Reservations WHERE room_id = :room_id ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset", $filter, $prepare);
+        $data = $this->sql->select2($sqlStr, $filter, $prepare);
 
         $response->setBody($data);
+    }
+
+    /**
+     * @param array $q (request)
+     * @return int What kind of query it is
+     */
+    private function check(array $q)
+    {
+        if (!isset($q["room"])) {
+            return -1;
+        }
+        elseif (isset($q["offset"]) && isset($q["limit"]) && !isset($q["day"]) && !isset($q["month"]) && !isset($q["year"])) {
+            return self::SET;
+        }
+        elseif (isset($q["day"]) && isset($q["month"]) && isset($q["year"])) {
+            return self::DATE;
+        }
+        return self::SET;
     }
 
     public function doPost(Request $request, Response $response)

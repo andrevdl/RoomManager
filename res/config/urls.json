@@ -1,4 +1,5 @@
 {
+  "/room" : "%MODULE%\\ShowRoom",
   "/rooms" : "%MODULE%\\ShowRooms",
   "/locations" : "%MODULE%\\ShowLocations",
   "/reservations" : "%MODULE%\\ShowReservations",
