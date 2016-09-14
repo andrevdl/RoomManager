@@ -33,6 +33,10 @@ class Request
         return $this->query;
     }
 
+    public function addQuery($key, $name) {
+        $this->query[$key] = $name;
+    }
+
     /**
      * @return string
      */
