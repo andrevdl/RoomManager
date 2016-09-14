@@ -20,7 +20,11 @@ CREATE TABLE IF NOT EXISTS Users (
   user_id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL, #need possible data type change
-  salt VARCHAR(255) NOT NULL #need possible data type change
+  salt VARCHAR(255) NOT NULL, #need possible data type change
+
+  #protection part
+  verify CHAR(64),
+  lease TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS Reservations (
@@ -45,3 +49,5 @@ CREATE TABLE IF NOT EXISTS Invites (
   FOREIGN KEY (res_id) REFERENCES Reservations(res_id),
   FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
+
+CREATE TRIGGER user_date BEFORE INSERT ON Users FOR EACH ROW SET NEW.lease = CURDATE();

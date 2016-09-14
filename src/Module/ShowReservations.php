@@ -40,18 +40,17 @@ class ShowReservations implements HttpResponse
         ];
         $filter = ["%d"];
 
-
         switch ($this->check($q)) {
-            case 0:
-                $sqlStr .= "ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset";
-                $statement["offset"] =isset($q["offset"]) ? $q["offset"] : 0;
-                $statement["limit"] =isset($q["limit"]) ? $q["limit"] : 15;
-                array_merge($filter, ["%d", "%d"]);
-                break;
-            case 1:
+            case self::DATE:
                 $sqlStr .= "AND date = :date";
                 $statement["date"] = sprintf("%s-%s-%s", $q["year"], $q["month"], $q["day"]);
                 $filter[] =  "%s";
+                break;
+            case self::SET:
+                $sqlStr .= "ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset";
+                $statement["offset"] = isset($q["offset"]) ? $q["offset"] : 0;
+                $statement["limit"] = isset($q["limit"]) ? $q["limit"] : 15;
+                array_merge($filter, ["%d", "%d"]);
                 break;
             default:
                 $response->setCode(400);

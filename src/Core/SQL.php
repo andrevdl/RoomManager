@@ -93,7 +93,7 @@ class SQL
      * @param array|string $format Filter data with the filter format. To do that it use filter_var.
      * @return array The filtered data
      */
-    public function prepare(array $data, $format){
+    public function prepare(array $data, $format = null){
         $filter_data = [];
         if (!is_array($format)) {
             $filter = $this->filterType($format);

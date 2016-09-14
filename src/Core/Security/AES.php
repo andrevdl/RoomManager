@@ -129,6 +129,7 @@ class AES
     public function setIV($IV) {
         $this->IV = $IV;
     }
+
     protected function getIV() {
         if ($this->IV == "") {
             $this->IV = mcrypt_create_iv(mcrypt_get_iv_size($this->cipher, $this->mode), MCRYPT_RAND);
