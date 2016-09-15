@@ -35,7 +35,7 @@ class InviteRevoke implements HttpResponse
     public function doPost(Request $request, Response $response)
     {
         //TODO ask andere how revoke works state 0?
-      /*  $vars = [
+        $vars = [
             "reservation",
             "ids"
         ];
@@ -53,7 +53,7 @@ class InviteRevoke implements HttpResponse
         }
 
         foreach ($_POST["ids"] as $id) {
-            $status = $this->sql->insert(
+            $status = $this->sql->update(
                 "Invites",
                 [
                     "res_id" => $_POST["reservation"],
@@ -65,6 +65,6 @@ class InviteRevoke implements HttpResponse
                 $response->setCode(400);
                 return;
             }
-        } */
+        }
     }
 }
