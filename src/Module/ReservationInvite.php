@@ -53,14 +53,7 @@ class ReservationInvite implements HttpResponse
         }
 
         foreach ($_POST["ids"] as $id) {
-            $status = $this->sql->insert(
-                "reservations",
-                [
-                    "res_id" => $_POST["room"],
-                    "user_id" => $id
-                ],
-                ["%d", "%d"]
-            );
+            $status = $this->sql->update("Invites", ["state" => 0], ["res_id" => $_POST["reservation"], "user_id" => $id ], ["%d"], ["%d"]);
             if ($status === false) {
                 $response->setCode(400);
                 return;
