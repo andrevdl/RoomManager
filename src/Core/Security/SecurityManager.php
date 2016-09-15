@@ -10,73 +10,128 @@ namespace RoomManager\Core\Security;
 
 
 use RoomManager\Core\Config\ConfigManager;
+use RoomManager\Core\Http\HttpResponse;
+use RoomManager\Core\Http\Request;
+use RoomManager\Core\Http\Response;
 use RoomManager\Core\SQL;
 
-class SecurityManager
+class SecurityManager implements HttpResponse
 {
     /**
      * @var SQL
      */
     private $sql;
 
-    public function __construct(SQL $SQL)
+    private $username;
+
+    private $password;
+
+    public function init(SQL $SQL)
     {
         $this->sql = $SQL;
     }
 
-    public function login($username, $password) {
+    public function doGet(Request $request, Response $response)
+    {
+        $data = $this->valid($request);
+        if ($data === false) {
+            $response->setCode(401);
+            $response->send();
+        }
+
+        if ($data !== true) {
+            $response->setBody($response);
+        }
+    }
+
+    public function doPost(Request $request, Response $response)
+    {
+        $data = $this->valid($request);
+        if ($data === false) {
+            $response->setCode(401);
+            $response->send();
+        }
+
+        if ($data !== true) {
+            $response->setBody($response);
+        }
+    }
+
+    private function valid(Request $request) {
         if (!isset($_POST["secret"]) || !isset($_POST["IV"])) {
             return false;
         }
 
-        $p = $this->valid();
+        $m = new ConfigManager();
+        $aes = new AES($_POST["secret"], $m->getConfig("api")["client"], 256, AES::M_CBC);
+        $aes->setIV($_POST["IV"]);
 
-        $prepare = $this->sql->prepare([$username, $password]);
-        $result = $this->sql->row("SELECT * FROM users WHERE username = ? AND password = ?", $prepare);
+        $data = json_encode($aes->decrypt(), true);
 
-        if (!$result) {
+        // check body
+        $vars = [
+            "id",
+            "verify",
+            "endpoint",
+            "time"
+        ];
+
+        foreach ($vars as $var) {
+            if (!isset($data[$var])) {
+                return false;
+            }
+        }
+
+        // todo: check time
+//        $data["time"]
+
+        if ($request->getPath() != $data["endpoint"]) {
             return false;
         }
 
-        // create lease
-        $verify = hash("sha256", $result["username"] . bin2hex(openssl_random_pseudo_bytes(32)));
-        $status = $this->sql->update("users", ["verify" => $verify], ["user_id" => $result["user_id"]]);
+        if ("/login" != $data["endpoint"]) {
+            $prepare = $this->sql->prepare($data["verify"], [$data["id"]]);
+            $time = $this->sql->variable(
+                "SELECT lease FROM Users WHERE verify = ? AND user_id = ?",
+                $prepare
+            );
+
+            if ($time == false) {
+                return false;
+            }
+
+            // check lease time
+            // ...
+
+            $this->sql->update("users", [], ["user_id" => $data["user_id"]], null, ["%d"]);
+            return true;
+        } else {
+            if ($data["id"] == true) {
+                return false;
+            }
+
+            $prepare = $this->sql->prepare([$this->username, $this->password]);
+            $result = $this->sql->row("SELECT * FROM users WHERE username = ? AND password = ?", $prepare);
+
+            if (!$result) {
+                return false;
+            }
+
+            // create aes response
+            return $this->sign($result["user_id"], $result["username"]);
+        }
+    }
+
+    private function sign($id, $username) {
+        $verify = hash("sha256", $username . bin2hex(openssl_random_pseudo_bytes(32)));
+        $status = $this->sql->update("users", ["verify" => $verify], ["user_id" => $id]);
 
         if ($status === false) {
             return false;
         }
 
-        //create send package
-        $aes = new AESBody($result["user_id"], $verify);
-
-        return ["secret" => $aes->encrypt(), "IV" => base64_encode($aes->getIV())] ;
-    }
-
-    public function valid() {
-        if (!isset($_POST["secret"]) || !isset($_POST["IV"])) {
-            return false;
-        }
-
-
-
-        $m = new ConfigManager();
-        $aes = new AES($_POST["secret"], $m->getConfig("api")["client"]);
-
-        // todo: check time
-
-
-    }
-
-    private function updateLease() {
-
-    }
-
-    public function check() {
-
-    }
-
-    public function logout() {
-
+        $aes = new AESBody($id, $username, $verify);
+        return ["secret" => $aes->encrypt(), "IV" => base64_encode($aes->getIV())];
     }
 
     public static function generateAPIKey() {

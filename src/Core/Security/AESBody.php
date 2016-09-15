@@ -13,12 +13,13 @@ use RoomManager\Core\Config\ConfigManager;
 
 class AESBody extends AES
 {
-    public function __construct($id, $verify)
+    public function __construct($id, $username, $verify)
     {
         parent::__construct(
             json_encode(
                 [
                     "id" => $id,
+                    "username" => $username,
                     "verify" => $verify,
                     "time" => time()
                 ]

@@ -15,6 +15,8 @@ class Http
     
     private $handler;
 
+    private $authHandler;
+
     private $config;
 
     public function __construct()
@@ -24,7 +26,13 @@ class Http
 
         $this->config = new ConfigManager();
         
-        $urls = $this->config->getConfig("urls");var_dump("daadada");
+        $urls = $this->config->getConfig("urls");
+
+        //login hook
+        $urls = array_merge($urls, ["/login" => "RoomManager\\Core\\Security\\SecurityManager"]);
+        if ($this->request->getPath() != "/login") {
+            $this->authHandler = new SecurityManager();
+        }
 
         $c = "";
         foreach ($urls as $url => $class) {
@@ -51,15 +59,10 @@ class Http
     public function execute(SQL $SQL) {
         $resp = new Response();
 
-        try {
-            $man = new SecurityManager($SQL);
-            var_dump($man->login("andre", "qwerty"));
-        } catch (\Exception $e) {
-            echo $e->getMessage();
-        }
-
         $this->handler->init($SQL);
         $resp->setCode(200);
+
+        $this->auth($resp);
         
         switch ($_SERVER['REQUEST_METHOD']) {
             case "GET":
@@ -69,11 +72,27 @@ class Http
                 $this->handler->doPost($this->request, $resp);
                 break;
             default:
-                // error
+                $resp->setCode(405);
                 break;
         }
         
         $resp->send();
+    }
+
+    private function auth(Response $resp) {
+        if (!is_null($this->authHandler)) {
+            switch ($_SERVER['REQUEST_METHOD']) {
+                case "GET":
+                    $this->authHandler->doGet($this->request, $resp);
+                    break;
+                case "POST":
+                    $this->authHandler->doPost($this->request, $resp);
+                    break;
+                default:
+                    $resp->setCode(405);
+                    break;
+            }
+        }
     }
 
     /**
