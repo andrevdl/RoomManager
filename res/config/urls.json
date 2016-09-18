@@ -7,5 +7,6 @@
   "/invite" : "%MODULE%\\ReservationInvite",
   "/revoke" : "%MODULE%\\ReservationRevoke",
   "/users" : "%MODULE%\\ShowUsers",
-  "/user" : "%MODULE%\\ShowUser"
+  "/user" : "%MODULE%\\ShowUser",
+  "/decline" : "%MODULE%\\InviteDecline"
 }

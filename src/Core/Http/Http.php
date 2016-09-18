@@ -31,7 +31,7 @@ class Http
         //login hook
         $urls = array_merge($urls, ["/login" => "RoomManager\\Core\\Security\\SecurityManager"]);
         if ($this->request->getPath() != "/login") {
-            $this->authHandler = new SecurityManager();
+//            $this->authHandler = new SecurityManager();
         }
 
         $c = "";
@@ -81,17 +81,7 @@ class Http
 
     private function auth(Response $resp) {
         if (!is_null($this->authHandler)) {
-            switch ($_SERVER['REQUEST_METHOD']) {
-                case "GET":
-                    $this->authHandler->doGet($this->request, $resp);
-                    break;
-                case "POST":
-                    $this->authHandler->doPost($this->request, $resp);
-                    break;
-                default:
-                    $resp->setCode(405);
-                    break;
-            }
+            $this->authHandler->auth($this->request, $resp);
         }
     }
 

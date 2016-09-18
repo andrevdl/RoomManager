@@ -14,7 +14,7 @@ use RoomManager\Core\Http\Request;
 use RoomManager\Core\Http\Response;
 use RoomManager\Core\SQL;
 
-class InviteRevoke implements HttpResponse
+class InviteDecline implements HttpResponse
 {
     /**
      * @var SQL
@@ -34,7 +34,6 @@ class InviteRevoke implements HttpResponse
 
     public function doPost(Request $request, Response $response)
     {
-        //TODO ask andere how revoke works state 0?
         $vars = [
             "reservation",
             "ids"
@@ -57,9 +56,10 @@ class InviteRevoke implements HttpResponse
                 "Invites",
                 [
                     "res_id" => $_POST["reservation"],
-                    "user_id" => $id
+                    "user_id" => $id,
+                    "state" => 0
                 ],
-                ["%d", "%d"]
+                ["%d", "%d", "%d"]
             );
             if ($status === false) {
                 $response->setCode(400);

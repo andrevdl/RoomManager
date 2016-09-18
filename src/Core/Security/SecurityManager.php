@@ -22,18 +22,16 @@ class SecurityManager implements HttpResponse
      */
     private $sql;
 
-    private $username;
-
-    private $password;
+    private $data = [];
 
     public function init(SQL $SQL)
     {
         $this->sql = $SQL;
     }
 
-    public function doGet(Request $request, Response $response)
-    {
+    public function auth(Request $request, Response $response) {
         $data = $this->valid($request);
+
         if ($data === false) {
             $response->setCode(401);
             $response->send();
@@ -44,27 +42,45 @@ class SecurityManager implements HttpResponse
         }
     }
 
+    public function doGet(Request $request, Response $response)
+    {
+        $response->setCode(400);
+        return;
+//        $this->doPost($request, $response);
+    }
+
+    // add token support; code part is bugging
     public function doPost(Request $request, Response $response)
     {
-        $data = $this->valid($request);
-        if ($data === false) {
-            $response->setCode(401);
-            $response->send();
+        // temp removed
+//        if ($this->data["id"] == true) {
+//            $response->setCode(400);
+//            return;
+//        }
+
+        // temp data is filled
+        $prepare = $this->sql->prepare(["andre", "qwerty"]);
+        $result = $this->sql->row("SELECT user_id, username FROM users WHERE username = ? AND password = ?", $prepare);
+
+        if (!$result) {
+            $response->setCode(400);
+            return;
         }
 
-        if ($data !== true) {
-            $response->setBody($response);
-        }
+        $result = array_merge($result, $this->sign($result["user_id"], $result["username"]));
+        $response->setBody($result);
     }
 
     private function valid(Request $request) {
-        if (!isset($_POST["secret"]) || !isset($_POST["IV"])) {
+        $q = $request->getQuery();
+
+        if (!isset($q["secret"]) || !isset($q["iv"])) {
             return false;
         }
 
         $m = new ConfigManager();
-        $aes = new AES($_POST["secret"], $m->getConfig("api")["client"], 256, AES::M_CBC);
-        $aes->setIV($_POST["IV"]);
+        $aes = new AES($q["secret"], $m->getConfig("api")["client"], 256, AES::M_CBC);
+        $aes->setIV($q["iv"]);
 
         $data = json_encode($aes->decrypt(), true);
 
@@ -89,6 +105,8 @@ class SecurityManager implements HttpResponse
             return false;
         }
 
+        $this->data = $data;
+
         if ("/login" != $data["endpoint"]) {
             $prepare = $this->sql->prepare($data["verify"], [$data["id"]]);
             $time = $this->sql->variable(
@@ -104,26 +122,13 @@ class SecurityManager implements HttpResponse
             // ...
 
             $this->sql->update("users", [], ["user_id" => $data["user_id"]], null, ["%d"]);
-            return true;
-        } else {
-            if ($data["id"] == true) {
-                return false;
-            }
-
-            $prepare = $this->sql->prepare([$this->username, $this->password]);
-            $result = $this->sql->row("SELECT * FROM users WHERE username = ? AND password = ?", $prepare);
-
-            if (!$result) {
-                return false;
-            }
-
-            // create aes response
-            return $this->sign($result["user_id"], $result["username"]);
         }
+
+        return true;
     }
 
     private function sign($id, $username) {
-        $verify = hash("sha256", $username . bin2hex(openssl_random_pseudo_bytes(32)));
+        $verify = bin2hex(openssl_random_pseudo_bytes(32));
         $status = $this->sql->update("users", ["verify" => $verify], ["user_id" => $id]);
 
         if ($status === false) {
@@ -131,7 +136,7 @@ class SecurityManager implements HttpResponse
         }
 
         $aes = new AESBody($id, $username, $verify);
-        return ["secret" => $aes->encrypt(), "IV" => base64_encode($aes->getIV())];
+        return ["secret" => $aes->encrypt(), "iv" => base64_encode($aes->getIV())];
     }
 
     public static function generateAPIKey() {

@@ -29,29 +29,35 @@ class ShowRooms implements HttpResponse
     public function doGet(Request $request, Response $response)
     {
         $q = $request->getQuery();
-        $sqlStr = "SELECT * FROM Rooms WHERE location_id = :location_id AND name = :name ";
 
         if (!isset($q["location"])) {
             $response->setCode(400);
             return;
         }
 
+        $sqlStr = "SELECT * FROM Rooms WHERE location_id = :location_id";
+        $filter = ["%d"];
+
         $statement = [
-            "location_id" => $q["location"],
-            "name" => isset($q["search"]) ? $q["search"] : "",
+            "location_id" => $q["location"]
         ];
+
+        if (isset($q["search"])) {
+            $statement["search"] = $q["search"];
+            $sqlStr .= " AND name LIKE :search";
+            $filter[] = ["%s"];
+        }
 
         if (isset($q["size"])) {
             $statement["size"] = $q["size"];
-            $sqlStr .= "AND size = :size";
+            $sqlStr .= " AND size >= :size";
+            $filter[] = ["%d"];
         }
 
-        $filter = ["%d", "%s", "%d"];
-
         $prepare = $this->sql->prepare($statement, $filter);
-        $prepare["search"] = "%" . $prepare["search"] . "%";
-        if (isset($q["size"])) {
-            $prepare["size"] = "%" . $prepare["size"] . "%";
+
+        if (isset($q["search"])) {
+            $prepare["search"] = "%" . $prepare["search"] . "%";
         }
 
         $response->setBody($data = $this->sql->select2($sqlStr,

@@ -33,6 +33,12 @@ class ShowReservations implements HttpResponse
     public function doGet(Request $request, Response $response)
     {
         $q = $request->getQuery();
+
+        if (!isset($q["room"])) {
+            $response->setCode(400);
+            return;
+        }
+
         $sqlStr = "SELECT * FROM Reservations WHERE room_id = :room_id";
 
         $statement = [
@@ -42,15 +48,15 @@ class ShowReservations implements HttpResponse
 
         switch ($this->check($q)) {
             case self::DATE:
-                $sqlStr .= "AND date = :date";
+                $sqlStr .= " AND date = :date";
                 $statement["date"] = sprintf("%s-%s-%s", $q["year"], $q["month"], $q["day"]);
                 $filter[] =  "%s";
                 break;
             case self::SET:
-                $sqlStr .= "ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset";
+                $sqlStr .= " ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset";
                 $statement["offset"] = isset($q["offset"]) ? $q["offset"] : 0;
                 $statement["limit"] = isset($q["limit"]) ? $q["limit"] : 15;
-                array_merge($filter, ["%d", "%d"]);
+                $filter = array_merge($filter, ["%d", "%d"]);
                 break;
             default:
                 $response->setCode(400);

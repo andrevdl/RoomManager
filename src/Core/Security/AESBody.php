@@ -13,7 +13,7 @@ use RoomManager\Core\Config\ConfigManager;
 
 class AESBody extends AES
 {
-    public function __construct($id, $username, $verify)
+    public function __construct($id, $username, $verify) // add type token, lesser access; perm.json needed; auth parameter
     {
         parent::__construct(
             json_encode(
