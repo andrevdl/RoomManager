@@ -35,6 +35,7 @@ class RoomReserve implements HttpResponse
     public function doPost(Request $request, Response $response)
     {
         $vars = [
+            "user",
             "room",
             "date",
             "start",
@@ -53,13 +54,16 @@ class RoomReserve implements HttpResponse
             "reservations",
             [
                 "room_id" => $_POST["room"],
+                "user_id" => $_POST["user"],
                 "date" => $_POST["date"],
                 "start_time" => $_POST["start"],
                 "end_time" => $_POST["end"],
-                "description" => $_POST["description"]
+                "description" => $_POST["description"],
+                "state" => 1
             ],
-            ["%d", "%s", "%s", "%s", "%s"]
+            ["%d", "%d", "%s", "%s", "%s", "%s", "%d"]
         );
+
         //Add reservation parameter to request
         $request->addQuery("reservation", $this->sql->lastInsertId());
 

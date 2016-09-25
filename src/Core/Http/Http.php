@@ -27,10 +27,10 @@ class Http
         $this->config = new ConfigManager();
         
         $urls = $this->config->getConfig("urls");
+        $urls_sec = $this->config->getConfig("urls-sec");
 
-        //login hook
-        $urls = array_merge($urls, ["/login" => "RoomManager\\Core\\Security\\SecurityManager"]);
-        if ($this->request->getPath() != "/login") {
+        $urls = array_merge($urls, $urls_sec);
+        if (!in_array($this->request->getPath(), $urls_sec)) {
 //            $this->authHandler = new SecurityManager();
         }
 
@@ -49,6 +49,9 @@ class Http
             $obj = new $c;
             if ($obj instanceof HttpResponse) {
                 $this->handler = $obj;
+            } else {
+                $this->response->setCode(501);
+                $this->response->send();
             }
         } else {
             $this->response->setCode(501);
@@ -62,7 +65,7 @@ class Http
         $this->handler->init($SQL);
         $resp->setCode(200);
 
-        $this->auth($resp);
+        $this->auth($SQL, $resp);
         
         switch ($_SERVER['REQUEST_METHOD']) {
             case "GET":
@@ -79,8 +82,9 @@ class Http
         $resp->send();
     }
 
-    private function auth(Response $resp) {
+    private function auth(SQL $SQL, Response $resp) {
         if (!is_null($this->authHandler)) {
+            $this->authHandler->init($SQL);
             $this->authHandler->auth($this->request, $resp);
         }
     }

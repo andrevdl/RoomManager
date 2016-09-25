@@ -5,6 +5,7 @@
   "/reservations" : "%MODULE%\\ShowReservations",
   "/reserve" : "%MODULE%\\RoomReserve",
   "/invite" : "%MODULE%\\ReservationInvite",
+  "/invites" : "%MODULE%\\ShowInvites",
   "/revoke" : "%MODULE%\\ReservationRevoke",
   "/users" : "%MODULE%\\ShowUsers",
   "/user" : "%MODULE%\\ShowUser",

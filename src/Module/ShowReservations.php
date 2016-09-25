@@ -13,6 +13,8 @@ use RoomManager\Core\Http\HttpResponse;
 use RoomManager\Core\Http\Request;
 use RoomManager\Core\Http\Response;
 use RoomManager\Core\SQL;
+use RoomManager\Core\Utility\JSONBuilder;
+use RoomManager\Module\Helper\JSONBuilderHelper;
 
 class ShowReservations implements HttpResponse
 {
@@ -39,8 +41,12 @@ class ShowReservations implements HttpResponse
             return;
         }
 
-        $sqlStr = "SELECT * FROM Reservations WHERE room_id = :room_id";
-
+        $sqlStr = <<<EOT
+        SELECT res_id, room_id, user_id, username, name, date, start_time, end_time, description, state
+        FROM reservations 
+        INNER JOIN users USING (user_id)
+        WHERE room_id = :room_id AND state != 0
+EOT;
         $statement = [
             "room_id" => $q["room"],
         ];
@@ -49,7 +55,7 @@ class ShowReservations implements HttpResponse
         switch ($this->check($q)) {
             case self::DATE:
                 $sqlStr .= " AND date = :date";
-                $statement["date"] = sprintf("%s-%s-%s", $q["year"], $q["month"], $q["day"]);
+                $statement["date"] = $q["date"];
                 $filter[] =  "%s";
                 break;
             case self::SET:
@@ -66,6 +72,9 @@ class ShowReservations implements HttpResponse
         $prepare = $this->sql->prepare($statement, $filter);
         $data = $this->sql->select2($sqlStr, $filter, $prepare);
 
+        JSONBuilder::bundleDataArray($data, ["user_id", "username"], "user");
+        JSONBuilder::parseBooleanArray($data, "state");
+
         $response->setBody($data);
     }
 
@@ -78,10 +87,10 @@ class ShowReservations implements HttpResponse
         if (!isset($q["room"])) {
             return -1;
         }
-        elseif (isset($q["offset"]) && isset($q["limit"]) && !isset($q["day"]) && !isset($q["month"]) && !isset($q["year"])) {
+        elseif (isset($q["offset"]) && isset($q["limit"]) && !isset($q["date"])) {
             return self::SET;
         }
-        elseif (isset($q["day"]) && isset($q["month"]) && isset($q["year"])) {
+        elseif (isset($q["date"])) {
             return self::DATE;
         }
         return self::SET;

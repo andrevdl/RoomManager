@@ -13,6 +13,8 @@ use RoomManager\Core\Http\HttpResponse;
 use RoomManager\Core\Http\Request;
 use RoomManager\Core\Http\Response;
 use RoomManager\Core\SQL;
+use RoomManager\Core\Utility\JSONBuilder;
+use RoomManager\Module\Helper\JSONBuilderHelper;
 
 class ShowRoom implements HttpResponse
 {
@@ -45,10 +47,18 @@ class ShowRoom implements HttpResponse
 
         $prepare = $this->sql->prepare($statement, $filter);
         $data = $this->sql->select2(
-            "SELECT * FROM Rooms WHERE room_id = :room_id",
+            "SELECT location_id, room_id, r.name, l.name AS 'location_name', description, size FROM Rooms r INNER JOIN locations l USING (location_id) WHERE room_id = :room_id",
             $filter,
             $prepare
         );
+
+        JSONBuilder::bundleDataArray($data, ["location_id", "location_name"], "location");
+
+        //repair name
+        foreach ($data as &$item) {
+            $item["location"]["name"] = $item["location"]["location_name"];
+            unset($item["location"]["location_name"]);
+        }
 
         $response->setBody($data);
     }

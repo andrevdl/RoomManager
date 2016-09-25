@@ -13,6 +13,7 @@ use RoomManager\Core\Http\HttpResponse;
 use RoomManager\Core\Http\Request;
 use RoomManager\Core\Http\Response;
 use RoomManager\Core\SQL;
+use RoomManager\Core\Utility\JSONBuilder;
 
 class ShowUser implements HttpResponse
 {
@@ -43,12 +44,27 @@ class ShowUser implements HttpResponse
 
         $filter = ["%d", "%d", "%d"];
 
+        $sqlStr = <<<EOT
+        SELECT r.*, u.username FROM reservations r 
+        INNER JOIN invites i
+        INNER JOIN users u 
+        ON u.user_id = r.user_id
+        WHERE r.user_id = :user_id 
+        OR i.user_id = :user_id
+        AND i.state != 0
+        AND r.state != 0
+        ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset
+EOT;
+
         $prepare = $this->sql->prepare($statement, $filter);
         $data = $this->sql->select2(
-            "SELECT * FROM Reservations r INNER JOIN invites i WHERE r.user_id = :user_id OR i.user_id = :user_id ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset",
+            $sqlStr,
             $filter,
             $prepare
         );
+
+        JSONBuilder::bundleDataArray($data, ["user_id", "username"], "user");
+        JSONBuilder::parseBooleanArray($data, "state");
 
         $response->setBody($data);
     }

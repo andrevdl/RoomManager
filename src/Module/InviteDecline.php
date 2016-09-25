@@ -53,7 +53,7 @@ class InviteDecline implements HttpResponse
 
         foreach ($_POST["ids"] as $id) {
             $status = $this->sql->update(
-                "Invites",
+                "invites",
                 [
                     "res_id" => $_POST["reservation"],
                     "user_id" => $id,

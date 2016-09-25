@@ -14,4 +14,6 @@
 /revoke => reservation    [reservering terugtrekken]
 /decline => reservation   [uitnodiging weigeren]
 /login => username, password
-?? /logout ??
+
+For request debugging
+https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop

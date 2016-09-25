@@ -13,21 +13,30 @@ use RoomManager\Core\Config\ConfigManager;
 
 class AESBody extends AES
 {
-    public function __construct($id, $username, $verify) // add type token, lesser access; perm.json needed; auth parameter
+    private $data;
+
+    private function __construct($id, $username, $verify) // add type token, lesser access; perm.json needed; auth parameter
     {
         parent::__construct(
             json_encode(
                 [
                     "id" => $id,
                     "username" => $username,
-                    "verify" => $verify,
-                    "time" => time()
+                    "verify" => $verify
                 ]
             ),
             $this->getKey(),
-            256,
+            128,
             AES::M_CBC
         );
+    }
+
+    public static function createLogin($id, $username) {
+
+    }
+
+    public static function createToken() {
+
     }
 
     private function getKey() {
@@ -38,5 +47,17 @@ class AESBody extends AES
     public function getIV()
     {
         return parent::getIV();
+    }
+
+    public function sign($id, $username) {
+        $verify = bin2hex(openssl_random_pseudo_bytes(32));
+        $status = $this->sql->update("users", ["verify" => $verify], ["user_id" => $id]);
+
+        if ($status === false) {
+            return false;
+        }
+
+        $aes = new AESBody($id, $username, $verify);
+        return ["secret" => base64_encode($aes->encrypt()), "iv" => base64_encode($aes->getIV())];
     }
 }

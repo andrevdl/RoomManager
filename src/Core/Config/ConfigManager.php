@@ -14,7 +14,8 @@ use RoomManager\Core\Utility\Path;
 class ConfigManager
 {
     private static $placeholders = [
-        "%MODULE%" => "RoomManager\\Module"
+        "%MODULE%" => "RoomManager\\Module",
+        "%ADMIN_MODULE%" => "RoomManager\\Core\\Module"
     ];
 
     public function getConfig($name) {
@@ -25,12 +26,11 @@ class ConfigManager
     }
 
     private function replacePlaceholders($json) {
-        $output = [];
-        foreach ($json as $key => $item) {
+        foreach ($json as $key => &$item) {
             foreach (self::$placeholders as $placeholder => $value) {
-                $output[$key] = str_replace($placeholder, $value, $item);
+                $item = str_replace($placeholder, $value, $item);
             }
         }
-        return $output;
+        return $json;
     }
 }

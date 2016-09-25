@@ -10,19 +10,16 @@ namespace RoomManager\Core\Security;
 
 
 use RoomManager\Core\Config\ConfigManager;
-use RoomManager\Core\Http\HttpResponse;
 use RoomManager\Core\Http\Request;
 use RoomManager\Core\Http\Response;
 use RoomManager\Core\SQL;
 
-class SecurityManager implements HttpResponse
+class SecurityManager
 {
     /**
      * @var SQL
      */
     private $sql;
-
-    private $data = [];
 
     public function init(SQL $SQL)
     {
@@ -42,35 +39,6 @@ class SecurityManager implements HttpResponse
         }
     }
 
-    public function doGet(Request $request, Response $response)
-    {
-        $response->setCode(400);
-        return;
-//        $this->doPost($request, $response);
-    }
-
-    // add token support; code part is bugging
-    public function doPost(Request $request, Response $response)
-    {
-        // temp removed
-//        if ($this->data["id"] == true) {
-//            $response->setCode(400);
-//            return;
-//        }
-
-        // temp data is filled
-        $prepare = $this->sql->prepare(["andre", "qwerty"]);
-        $result = $this->sql->row("SELECT user_id, username FROM users WHERE username = ? AND password = ?", $prepare);
-
-        if (!$result) {
-            $response->setCode(400);
-            return;
-        }
-
-        $result = array_merge($result, $this->sign($result["user_id"], $result["username"]));
-        $response->setBody($result);
-    }
-
     private function valid(Request $request) {
         $q = $request->getQuery();
 
@@ -78,8 +46,13 @@ class SecurityManager implements HttpResponse
             return false;
         }
 
+        // timeout after 30 seconds
+        if (microtime(true) - $_REQUEST["REQUEST_TIME_FLOAT"] > 30) {
+            return false;
+        }
+
         $m = new ConfigManager();
-        $aes = new AES($q["secret"], $m->getConfig("api")["client"], 256, AES::M_CBC);
+        $aes = new AES($q["secret"], $m->getConfig("api")["client"], 128, AES::M_CBC); // check failure
         $aes->setIV($q["iv"]);
 
         $data = json_encode($aes->decrypt(), true);
@@ -89,7 +62,7 @@ class SecurityManager implements HttpResponse
             "id",
             "verify",
             "endpoint",
-            "time"
+            "type" // token, login
         ];
 
         foreach ($vars as $var) {
@@ -98,16 +71,16 @@ class SecurityManager implements HttpResponse
             }
         }
 
-        // todo: check time
-//        $data["time"]
+        // type must be token or login
+        if (!in_array($data["type"], ["token", "login"])) {
+            return false;
+        }
 
         if ($request->getPath() != $data["endpoint"]) {
             return false;
         }
 
-        $this->data = $data;
-
-        if ("/login" != $data["endpoint"]) {
+        if (!in_array($data["endpoint"], $m->getConfig("urls-sec"))) {
             $prepare = $this->sql->prepare($data["verify"], [$data["id"]]);
             $time = $this->sql->variable(
                 "SELECT lease FROM Users WHERE verify = ? AND user_id = ?",
@@ -125,18 +98,6 @@ class SecurityManager implements HttpResponse
         }
 
         return true;
-    }
-
-    private function sign($id, $username) {
-        $verify = bin2hex(openssl_random_pseudo_bytes(32));
-        $status = $this->sql->update("users", ["verify" => $verify], ["user_id" => $id]);
-
-        if ($status === false) {
-            return false;
-        }
-
-        $aes = new AESBody($id, $username, $verify);
-        return ["secret" => $aes->encrypt(), "iv" => base64_encode($aes->getIV())];
     }
 
     public static function generateAPIKey() {

@@ -1,0 +1,4 @@
+{
+  "/login" : "%ADMIN_MODULE%\\Login",
+  "/token" : "%ADMIN_MODULE%\\Token"
+}
