@@ -30,7 +30,7 @@ class Http
         $urls_sec = $this->config->getConfig("urls-sec");
 
         $urls = array_merge($urls, $urls_sec);
-        if (!in_array($this->request->getPath(), $urls_sec)) {
+        if (!in_array($this->request->getPath(), $urls_sec)) { // failure
 //            $this->authHandler = new SecurityManager();
         }
 

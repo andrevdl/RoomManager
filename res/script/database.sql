@@ -15,17 +15,28 @@ CREATE TABLE IF NOT EXISTS users (
   lease TIMESTAMP -- move
 );
 
-CREATE TABLE IF NOT EXISTS auth (
+CREATE TABLE IF NOT EXISTS api (
   share CHAR(32) NOT NULL PRIMARY KEY,
   private CHAR(32) NOT NULL
 );
 
--- need edit
-CREATE TABLE IF NOT EXISTS session (
-  user_id INT(11) NOT NULL,
-  verify CHAR(64),
+CREATE TABLE IF NOT EXISTS api_auth (
+  type CHAR(64) NOT NULL,
+  verify CHAR(64) NOT NULL,
+  server CHAR(32) NOT NULL,
+  share CHAR(32) NOT NULL,
   lease TIMESTAMP
 );
+
+#api_auth_*
+
+# CREATE TABLE IF NOT EXISTS session_type (
+#   type CHAR(64) NOT NULL PRIMARY KEY
+# );
+
+-- extended auth
+
+
 
 -- extended tables
 
