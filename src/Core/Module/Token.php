@@ -9,6 +9,7 @@
 namespace RoomManager\Core\Module;
 
 
+use Firebase\JWT\JWT;
 use RoomManager\Core\Config\ConfigManager;
 use RoomManager\Core\Http\HttpResponse;
 use RoomManager\Core\Http\Request;
@@ -23,7 +24,7 @@ class Token implements HttpResponse
      */
     private $sql;
 
-    public function init(SQL $SQL)
+    public function init(SQL $SQL, array $auth)
     {
         $this->sql = $SQL;
     }
@@ -42,12 +43,14 @@ class Token implements HttpResponse
 
         $q = $request->getQuery();
 
-        if (!empty($q["type"])) {
+        if (empty($q["type"]) || empty($_POST["key"])) {
             $response->setCode(400);
+            return;
         }
 
         if (!in_array($q["type"], array_keys($authTypes))) {
             $response->setCode(400);
+            $response->setBody(array_keys($authTypes));
             return;
         }
 
@@ -56,7 +59,13 @@ class Token implements HttpResponse
         if (class_exists($c)) {
             $obj = new $c;
             if ($obj instanceof IAuth) {
-                $this->validate($obj, $request); // do something from the output
+                $package = $this->createPackage($obj, $q["type"]);
+                if (!$package ) {
+                    $response->setCode(401);
+                    return;
+                }
+
+                $response->setBody(["jwt" => $package]);
             } else {
                 $response->setCode(501);
             }
@@ -65,18 +74,42 @@ class Token implements HttpResponse
         }
     }
 
-    private function validate(IAuth $auth, Request $request) {
+    private function createPackage(IAuth $auth, $type) {
         $prepare = $this->sql->prepare([$_POST["key"]]);
-        $status = $this->sql->variable("SELECT COUNT(share) FROM api WHERE share = ?", $prepare);
+        $private = $this->sql->variable("SELECT private FROM api WHERE share = ?", $prepare);
 
-        if ($status != 1) {
+        if (!$private) {
             return false;
         }
 
-        // create container
+        // checking precondition
+        foreach ($auth->requiredFields() as $field) {
+            if (!isset($_POST[$field])) {
+                return false;
+            }
+        }
 
-        // add auth type container part
+        $time = time();
 
-        return false;
+        $body = [
+            'iat' => $time, // Issued at: time when the token was generated
+            'jti' => base64_encode(mcrypt_create_iv(32)), // Json Token Id: an unique identifier for the token
+            'iss' => "SERVER NAME", // Issuer
+            'nbf' => $time, // Not before
+            'exp' => $time + 3600, // Expire (1 hour)
+            'data' => [],
+            'at' => $type
+        ];
+
+        if ($auth->create($body['data'], $this->sql) === false) {
+            return false;
+        }
+
+        $jwt = JWT::encode(
+            $body,
+            $private
+        );
+
+        return $jwt;
     }
 }

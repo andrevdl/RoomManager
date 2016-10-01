@@ -12,18 +12,24 @@ namespace RoomManager\Module;
 use RoomManager\Core\Http\HttpResponse;
 use RoomManager\Core\Http\Request;
 use RoomManager\Core\Http\Response;
+use RoomManager\Core\Security\IProtection;
 use RoomManager\Core\SQL;
 
-class InviteDecline implements HttpResponse
+class InviteDecline implements HttpResponse, IProtection
 {
     /**
      * @var SQL
      */
     private $sql;
 
-    public function init(SQL $SQL)
+    public function init(SQL $SQL, array $auth)
     {
         $this->sql = $SQL;
+    }
+
+    public function allowAuth()
+    {
+        return ["login"];
     }
 
     public function doGet(Request $request, Response $response)

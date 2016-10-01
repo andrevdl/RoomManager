@@ -13,7 +13,7 @@ use RoomManager\Core\SQL;
 
 interface HttpResponse
 {
-    public function init(SQL $SQL);
+    public function init(SQL $SQL, array $auth);
 
     public function doGet(Request $request, Response $response);
     

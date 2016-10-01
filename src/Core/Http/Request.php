@@ -23,6 +23,9 @@ class Request
         if (isset($info['query'])) {
             parse_str($info['query'], $this->query);
         }
+
+        // create auth box
+
     }
 
     /**

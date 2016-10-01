@@ -1,4 +1,5 @@
 {
+  "/token" : "%ADMIN_MODULE%\\Token",
   "/room" : "%MODULE%\\ShowRoom",
   "/rooms" : "%MODULE%\\ShowRooms",
   "/locations" : "%MODULE%\\ShowLocations",

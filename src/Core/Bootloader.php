@@ -28,7 +28,6 @@ class Bootloader
         
         $m = new ConfigManager();
         $this->setupSQL($m);
-
         
         $http->execute($this->sql);
     }

@@ -8,11 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   user_id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL, #need possible data type change
-  salt VARCHAR(255) NOT NULL, #need possible data type change
-
-  #protection part
-  verify CHAR(64), -- move
-  lease TIMESTAMP -- move
+  salt VARCHAR(255) NOT NULL #need possible data type change
 );
 
 CREATE TABLE IF NOT EXISTS api (
@@ -21,22 +17,24 @@ CREATE TABLE IF NOT EXISTS api (
 );
 
 CREATE TABLE IF NOT EXISTS api_auth (
+  verify CHAR(64) NOT NULL PRIMARY KEY,
   type CHAR(64) NOT NULL,
-  verify CHAR(64) NOT NULL,
-  server CHAR(32) NOT NULL,
-  share CHAR(32) NOT NULL,
-  lease TIMESTAMP
+  server CHAR(32) NOT NULL UNIQUE,
+  share CHAR(64) NOT NULL,
+  lease TIMESTAMP,
+  FOREIGN KEY (share) REFERENCES api(share),
+  UNIQUE KEY server_api_key (server)
 );
 
 #api_auth_*
-
-# CREATE TABLE IF NOT EXISTS session_type (
-#   type CHAR(64) NOT NULL PRIMARY KEY
-# );
-
 -- extended auth
 
-
+CREATE TABLE IF NOT EXISTS api_auth_login (
+  verify CHAR(64) NOT NULL,
+  user_id INT(11) NOT NULL,
+  PRIMARY KEY (verify, user_id),
+  FOREIGN KEY (verify) REFERENCES api_auth(verify) ON DELETE CASCADE
+);
 
 -- extended tables
 
@@ -78,7 +76,7 @@ CREATE TABLE IF NOT EXISTS Invites (
   FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
-CREATE TRIGGER user_date BEFORE INSERT ON users FOR EACH ROW SET NEW.lease = CURDATE();
+CREATE TRIGGER api_date BEFORE INSERT ON api_auth FOR EACH ROW SET NEW.lease = CURDATE(); # change to current timestamp
 
 -- test data
 
@@ -96,4 +94,4 @@ INSERT INTO `rooms` (`room_id`,`location_id`,`name`,`size`) VALUES (71,5,"posuer
 INSERT INTO `rooms` (`room_id`,`location_id`,`name`,`size`) VALUES (81,2,"ullamcorper",320),(82,4,"varius",123),(83,2,"mattis.",240),(84,1,"Proin",332),(85,1,"luctus",436),(86,2,"enim.",140),(87,4,"et,",94),(88,2,"luctus.",189),(89,5,"mi.",344),(90,4,"et",97);
 INSERT INTO `rooms` (`room_id`,`location_id`,`name`,`size`) VALUES (91,5,"vel,",167),(92,2,"ipsum.",360),(93,3,"eu",170),(94,1,"in",471),(95,1,"convallis",193),(96,4,"cursus",113),(97,1,"iaculis",181),(98,4,"sem.",477),(99,2,"eu",101),(100,2,"auctor",478);
 
-INSERT INTO `users` (`user_id`,`username`,`password`) VALUES (1,"tim","tim"),(2,"garcia","garcia"),(3,"bjorn","bjorn"),(3,"andre","andre");
+INSERT INTO `users` (`user_id`,`username`,`password`) VALUES (1,"tim","tim"),(2,"garcia","garcia"),(3,"bjorn","bjorn"),(4,"andre","andre");

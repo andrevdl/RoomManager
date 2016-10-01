@@ -2,9 +2,9 @@
 
 namespace RoomManager\Core\Http;
 
+use Firebase\JWT\JWT;
 use RoomManager\Core\Config\ConfigManager;
-use RoomManager\Core\Security\AES;
-use RoomManager\Core\Security\SecurityManager;
+use RoomManager\Core\Security\IProtection;
 use RoomManager\Core\SQL;
 
 class Http
@@ -27,12 +27,6 @@ class Http
         $this->config = new ConfigManager();
         
         $urls = $this->config->getConfig("urls");
-        $urls_sec = $this->config->getConfig("urls-sec");
-
-        $urls = array_merge($urls, $urls_sec);
-        if (!in_array($this->request->getPath(), $urls_sec)) { // failure
-//            $this->authHandler = new SecurityManager();
-        }
 
         $c = "";
         foreach ($urls as $url => $class) {
@@ -62,11 +56,16 @@ class Http
     public function execute(SQL $SQL) {
         $resp = new Response();
 
-        $this->handler->init($SQL);
+        // check auth
+        $auth = $this->auth($SQL);
+        if ($this->handler instanceof IProtection && !in_array($auth['type'], $this->handler->allowAuth())) {
+            $resp->setCode(403);
+            $resp->send();
+        }
+
+        $this->handler->init($SQL, $auth);
         $resp->setCode(200);
 
-        $this->auth($SQL, $resp);
-        
         switch ($_SERVER['REQUEST_METHOD']) {
             case "GET":
                  $this->handler->doGet($this->request, $resp);
@@ -78,15 +77,24 @@ class Http
                 $resp->setCode(405);
                 break;
         }
-        
+
         $resp->send();
     }
 
-    private function auth(SQL $SQL, Response $resp) {
-        if (!is_null($this->authHandler)) {
-            $this->authHandler->init($SQL);
-            $this->authHandler->auth($this->request, $resp);
+    private function auth(SQL $SQL) {
+        if (isset($this->request->getQuery()['jwt']) && isset($this->request->getQuery()['key'])) {
+            try {
+                $prepare = $SQL->prepare([$this->request->getQuery()["key"]]);
+                $private = $SQL->variable("SELECT private FROM api WHERE share = ?", $prepare);
+
+                $token = JWT::decode($this->request->getQuery()['jwt'], $private, ["HS256"]);
+                return ['type' => $token->at, 'data' => $token->data];
+            } catch (\Exception $e){
+                return ['type' => "", 'body' => []];
+            }
         }
+
+        return ['type' => "", 'body' => []];
     }
 
     /**

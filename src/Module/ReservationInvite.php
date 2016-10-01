@@ -12,9 +12,10 @@ namespace RoomManager\Module;
 use RoomManager\Core\Http\HttpResponse;
 use RoomManager\Core\Http\Request;
 use RoomManager\Core\Http\Response;
+use RoomManager\Core\Security\IProtection;
 use RoomManager\Core\SQL;
 
-class ReservationInvite implements HttpResponse
+class ReservationInvite implements HttpResponse, IProtection
 {
 
     /**
@@ -22,9 +23,14 @@ class ReservationInvite implements HttpResponse
      */
     private $sql;
 
-    public function init(SQL $SQL)
+    public function init(SQL $SQL, array $auth)
     {
         $this->sql = $SQL;
+    }
+
+    public function allowAuth()
+    {
+        return ["login"];
     }
 
     public function doGet(Request $request, Response $response)

@@ -17,3 +17,13 @@
 
 For request debugging
 https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop
+
+---------------
+fix search commands
+fix reservation inner room object
+fix login/token
+
+----------
+test stuff
+"server" : "fa9b1baf775ee7927e11d60d7e49316f",
+"client" : "a16eecb4d8582fe8140cf0b338987940"

@@ -9,11 +9,11 @@
 namespace RoomManager\Core\Security;
 
 
+use RoomManager\Core\SQL;
+
 interface IAuth
 {
-    function requiredFields();
+    public function requiredFields();
 
-    function create();
-
-    function verify();
+    public function create(array &$body, SQL $SQL);
 }

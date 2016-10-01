@@ -12,11 +12,12 @@ namespace RoomManager\Module;
 use RoomManager\Core\Http\HttpResponse;
 use RoomManager\Core\Http\Request;
 use RoomManager\Core\Http\Response;
+use RoomManager\Core\Security\IProtection;
 use RoomManager\Core\SQL;
 use RoomManager\Core\Utility\JSONBuilder;
 use RoomManager\Module\Helper\JSONBuilderHelper;
 
-class ShowReservations implements HttpResponse
+class ShowReservations implements HttpResponse, IProtection
 {
     const DATE = 0;
 
@@ -27,9 +28,14 @@ class ShowReservations implements HttpResponse
      */
     private $sql;
 
-    public function init(SQL $SQL)
+    public function init(SQL $SQL, array $auth)
     {
         $this->sql = $SQL;
+    }
+
+    public function allowAuth()
+    {
+        return ["token", "login"];
     }
 
     public function doGet(Request $request, Response $response)
