@@ -16,33 +16,12 @@ CREATE TABLE IF NOT EXISTS api (
   private CHAR(32) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS api_auth (
-  verify CHAR(64) NOT NULL PRIMARY KEY,
-  type CHAR(64) NOT NULL,
-  server CHAR(32) NOT NULL UNIQUE,
-  share CHAR(64) NOT NULL,
-  lease TIMESTAMP,
-  FOREIGN KEY (share) REFERENCES api(share),
-  UNIQUE KEY server_api_key (server)
-);
-
-#api_auth_*
--- extended auth
-
-CREATE TABLE IF NOT EXISTS api_auth_login (
-  verify CHAR(64) NOT NULL,
-  user_id INT(11) NOT NULL,
-  PRIMARY KEY (verify, user_id),
-  FOREIGN KEY (verify) REFERENCES api_auth(verify) ON DELETE CASCADE
-);
-
 -- extended tables
 
 CREATE TABLE IF NOT EXISTS locations (
   location_id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL
 );
-
 
 CREATE TABLE IF NOT EXISTS rooms (
   room_id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -80,7 +59,7 @@ CREATE TRIGGER api_date BEFORE INSERT ON api_auth FOR EACH ROW SET NEW.lease = C
 
 -- test data
 
-INSERT INTO `Locations` (`location_id`,`name`) VALUES (1,"Amersfoort"),(2,"Apeldoorn"),(3,"Den Haag"),(4,"Oldenzaal"),(5,"Münster");
+INSERT INTO `Locations` (`location_id`,`name`) VALUES (1,"Amersfoort"),(2,"Apeldoorn"),(3,"Den Haag"),(4,"Oldenzaal"),(5,"Munster");
 
 #discription is empty
 INSERT INTO `rooms` (`room_id`,`location_id`,`name`,`size`) VALUES (1,3,"magna",415),(2,1,"rutrum",81),(3,4,"ac",295),(4,4,"lobortis,",388),(5,5,"eu",163),(6,1,"erat,",282),(7,1,"Suspendisse",317),(8,1,"in,",164),(9,2,"sed",369),(10,1,"mi",284);
