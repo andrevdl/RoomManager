@@ -14,7 +14,7 @@ class Path
     private static $root;
 
     public static function init() {
-         self::$root = $_SERVER['DOCUMENT_ROOT'];
+         self::$root = ROOT;
     }
 
     public static function getRes($path) {

@@ -17,15 +17,14 @@ class Request
 
     public function __construct()
     {
-        $info = parse_url($_SERVER['REQUEST_URI']);
+        $url = preg_replace("/^" . URL_ROOT .  "/", "", $_SERVER['REQUEST_URI']);
+        $info = parse_url($url);echo $url;
+
         $this->path = $info['path'];
         
         if (isset($info['query'])) {
             parse_str($info['query'], $this->query);
         }
-
-        // create auth box
-
     }
 
     /**

@@ -15,8 +15,6 @@ class Http
     
     private $handler;
 
-    private $authHandler;
-
     private $config;
 
     public function __construct()
