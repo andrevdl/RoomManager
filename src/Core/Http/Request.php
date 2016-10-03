@@ -18,7 +18,7 @@ class Request
     public function __construct()
     {
         $url = preg_replace("/^" . URL_ROOT .  "/", "", $_SERVER['REQUEST_URI']);
-        $info = parse_url($url);echo $url;
+        $info = parse_url($url);
 
         $this->path = $info['path'];
         
