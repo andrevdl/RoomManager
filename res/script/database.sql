@@ -55,8 +55,6 @@ CREATE TABLE IF NOT EXISTS Invites (
   FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
-CREATE TRIGGER api_date BEFORE INSERT ON api_auth FOR EACH ROW SET NEW.lease = CURDATE(); # change to current timestamp
-
 -- test data
 
 INSERT INTO `Locations` (`location_id`,`name`) VALUES (1,"Amersfoort"),(2,"Apeldoorn"),(3,"Den Haag"),(4,"Oldenzaal"),(5,"Munster");
