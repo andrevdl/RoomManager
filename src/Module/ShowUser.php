@@ -23,9 +23,12 @@ class ShowUser implements HttpResponse, IProtection
      */
     private $sql;
 
+    private $auth;
+
     public function init(SQL $SQL, array $auth)
     {
         $this->sql = $SQL;
+        $this->auth = $auth;
     }
 
     public function allowAuth()
@@ -37,13 +40,8 @@ class ShowUser implements HttpResponse, IProtection
     {
         $q = $request->getQuery();
 
-        if (!isset($q["user"])) {
-            $response->setCode(400);
-            return;
-        }
-
         $statement = [
-            "user_id" => $q["user"],
+            "user_id" => $this->auth["data"]->user_id,
             "offset" => isset($q["offset"]) ? $q["offset"] : 0,
             "limit" => isset($q["limit"]) ? $q["limit"] : 15,
         ];

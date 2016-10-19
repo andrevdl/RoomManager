@@ -22,9 +22,12 @@ class RoomReserve implements HttpResponse, IProtection
      */
     private $sql;
 
+    private $auth;
+
     public function init(SQL $SQL, array $auth)
     {
         $this->sql = $SQL;
+        $this->auth = $auth;
     }
 
     public function allowAuth()
@@ -41,7 +44,7 @@ class RoomReserve implements HttpResponse, IProtection
     public function doPost(Request $request, Response $response)
     {
         $vars = [
-            "user",
+            "name",
             "room",
             "date",
             "start",
@@ -60,18 +63,16 @@ class RoomReserve implements HttpResponse, IProtection
             "reservations",
             [
                 "room_id" => $_POST["room"],
-                "user_id" => $_POST["user"],
+                "user_id" => $this->auth["data"]->user_id,
+                "name" => $_POST["name"],
                 "date" => $_POST["date"],
                 "start_time" => $_POST["start"],
                 "end_time" => $_POST["end"],
                 "description" => $_POST["description"],
                 "state" => 1
             ],
-            ["%d", "%d", "%s", "%s", "%s", "%s", "%d"]
+            ["%d", "%d", "%s", "%s", "%s", "%s", "%s", "%d"]
         );
-
-        //Add reservation parameter to request
-        $request->addQuery("reservation", $this->sql->lastInsertId());
 
         if ($status === false) {
             $response->setCode(400);
@@ -79,8 +80,11 @@ class RoomReserve implements HttpResponse, IProtection
         }
 
         if (isset($_POST["ids"])) {
+            //Add reservation parameter to request
+            $_POST["reservation"] = $this->sql->lastInsertId();
+
             $c = new ReservationInvite();
-            $c->init($this->sql);
+            $c->init($this->sql, $this->auth);
             $c->doPost($request, $response);
         }
     }
