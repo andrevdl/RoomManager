@@ -14,6 +14,7 @@ use RoomManager\Core\Http\Request;
 use RoomManager\Core\Http\Response;
 use RoomManager\Core\Security\IProtection;
 use RoomManager\Core\SQL;
+use RoomManager\Core\Utility\BuildRules;
 use RoomManager\Core\Utility\JSONBuilder;
 
 class ShowUser implements HttpResponse, IProtection
@@ -49,10 +50,15 @@ class ShowUser implements HttpResponse, IProtection
         $filter = ["%d", "%d", "%d"];
 
         $sqlStr = <<<EOT
-        SELECT r.*, u.username FROM reservations r 
+        SELECT r.*, u.username,
+        o.size AS "room_size", o.name AS "room_name", o.description AS "room_description",
+        l.name AS "loc_name", l.location_id
+        FROM reservations r 
         INNER JOIN invites i
         INNER JOIN users u 
         ON u.user_id = r.user_id
+        INNER JOIN rooms o USING (room_id)
+        INNER JOIN locations l USING (location_id)
         WHERE r.user_id = :user_id 
         OR i.user_id = :user_id
         AND i.state != 0
@@ -67,7 +73,23 @@ EOT;
             $prepare
         );
 
-        JSONBuilder::bundleDataArray($data, ["user_id", "username"], "user");
+        $rules = new BuildRules([
+            "room" => [
+                "room_id" => "room_id",
+                "size" => "room_size",
+                "name" => "room_name",
+                "description" => "room_description",
+                "location" => [
+                    "location_id" => "location_id",
+                    "name" => "loc_name"
+                ]
+            ],
+            "user" => [
+                "user_id" => "user_id",
+                "username" => "username"
+            ]
+        ]);
+        JSONBuilder::bundleDataAdvancedArray($data, $rules);
         JSONBuilder::parseBooleanArray($data, "state");
 
         $response->setBody($data);

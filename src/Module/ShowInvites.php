@@ -44,6 +44,7 @@ class ShowInvites implements HttpResponse, IProtection
 
         $data = $this->sql->select("SELECT res_id, user_id, username, state FROM invites INNER JOIN users USING (user_id) WHERE res_id = ?", [$q["reservation"]]);
         JSONBuilder::bundleDataArray($data, ["user_id", "username"], "user");
+        JSONBuilder::parseBooleanArray($data, "state");
 
         $response->setBody($data);
     }

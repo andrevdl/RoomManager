@@ -11,6 +11,7 @@ namespace RoomManager\Core\Utility;
 
 class JSONBuilder
 {
+
     public static function bundleDataArray(array &$jsonArray, array $merge, $name)
     {
         foreach ($jsonArray as &$item) {
@@ -27,6 +28,17 @@ class JSONBuilder
         }
 
         $json[$name] = $bundle;
+    }
+
+    public static function bundleDataAdvancedArray(array &$jsonArray, BuildRules $rules)
+    {
+        foreach ($jsonArray as &$item) {
+            self::bundleDataAdvanced($item, $rules);
+        }
+    }
+
+    public static function bundleDataAdvanced(array &$json, BuildRules $rules) {
+        $rules->build($json);
     }
 
     public static function parseBooleanArray(array &$jsonArray, $key) {

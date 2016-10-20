@@ -14,6 +14,7 @@ use RoomManager\Core\Http\Request;
 use RoomManager\Core\Http\Response;
 use RoomManager\Core\Security\IProtection;
 use RoomManager\Core\SQL;
+use RoomManager\Core\Utility\BuildRules;
 use RoomManager\Core\Utility\JSONBuilder;
 use RoomManager\Module\Helper\JSONBuilderHelper;
 
@@ -48,10 +49,14 @@ class ShowReservations implements HttpResponse, IProtection
         }
 
         $sqlStr = <<<EOT
-        SELECT res_id, room_id, user_id, username, name, date, start_time, end_time, description, state
-        FROM reservations 
-        INNER JOIN users USING (user_id)
-        WHERE room_id = :room_id AND state != 0
+        SELECT r.*, u.username, 
+        o.size AS "room_size", o.name AS "room_name", o.description AS "room_description",
+        l.name AS "loc_name", l.location_id
+        FROM reservations r
+        INNER JOIN users u USING (user_id)
+        INNER JOIN rooms o USING (room_id)
+        INNER JOIN locations l USING (location_id)
+        WHERE r.room_id = :room_id AND state != 0
 EOT;
         $statement = [
             "room_id" => $q["room"],
@@ -78,7 +83,23 @@ EOT;
         $prepare = $this->sql->prepare($statement, $filter);
         $data = $this->sql->select2($sqlStr, $filter, $prepare);
 
-        JSONBuilder::bundleDataArray($data, ["user_id", "username"], "user");
+        $rules = new BuildRules([
+            "room" => [
+                "room_id" => "room_id",
+                "size" => "room_size",
+                "name" => "room_name",
+                "description" => "room_description",
+                "location" => [
+                    "location_id" => "location_id",
+                    "name" => "loc_name"
+                ]
+            ],
+            "user" => [
+                "user_id" => "user_id",
+                "username" => "username"
+            ]
+        ]);
+        JSONBuilder::bundleDataAdvancedArray($data, $rules);
         JSONBuilder::parseBooleanArray($data, "state");
 
         $response->setBody($data);

@@ -27,3 +27,5 @@ fix login/token
 test stuff
 "server" : "fa9b1baf775ee7927e11d60d7e49316f", -- rename to api key
 "client" : "a16eecb4d8582fe8140cf0b338987940" -- rename to secret key
+
+add limit hot fix
