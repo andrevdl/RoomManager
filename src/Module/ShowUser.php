@@ -54,15 +54,12 @@ class ShowUser implements HttpResponse, IProtection
         o.size AS "room_size", o.name AS "room_name", o.description AS "room_description",
         l.name AS "loc_name", l.location_id
         FROM reservations r 
-        INNER JOIN invites i
-        INNER JOIN users u 
-        ON u.user_id = r.user_id
         INNER JOIN rooms o USING (room_id)
         INNER JOIN locations l USING (location_id)
-        WHERE r.user_id = :user_id 
-        OR i.user_id = :user_id
-        AND i.state != 0
-        AND r.state != 0
+
+        LEFT JOIN invites i USING (res_id)
+        INNER JOIN users u
+        WHERE (i.user_id = u.user_id AND i.state != 0 OR r.user_id = u.user_id) AND u.user_id = :user_id AND r.state != 0
         ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset
 EOT;
 
