@@ -50,7 +50,7 @@ class ShowUser implements HttpResponse, IProtection
         $filter = ["%d", "%d", "%d"];
 
         $sqlStr = <<<EOT
-        SELECT r.*, u.username,
+        SELECT DISTINCT r.*, u.username,
         o.size AS "room_size", o.name AS "room_name", o.description AS "room_description",
         l.name AS "loc_name", l.location_id
         FROM reservations r 

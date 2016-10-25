@@ -43,41 +43,59 @@ class ShowReservations implements HttpResponse, IProtection
     {
         $q = $request->getQuery();
 
-        if (!isset($q["room"])) {
+        if (!(isset($q["reservation"]) xor isset($q["room"]))) {
             $response->setCode(400);
             return;
         }
 
-        $sqlStr = <<<EOT
-        SELECT r.*, u.username, 
-        o.size AS "room_size", o.name AS "room_name", o.description AS "room_description",
-        l.name AS "loc_name", l.location_id
-        FROM reservations r
-        INNER JOIN users u USING (user_id)
-        INNER JOIN rooms o USING (room_id)
-        INNER JOIN locations l USING (location_id)
-        WHERE r.room_id = :room_id AND state != 0
-EOT;
-        $statement = [
-            "room_id" => $q["room"],
-        ];
-        $filter = ["%d"];
+        if (isset($q["room"])) {
 
-        switch ($this->check($q)) {
-            case self::DATE:
-                $sqlStr .= " AND date = :date";
-                $statement["date"] = $q["date"];
-                $filter[] =  "%s";
-                break;
-            case self::SET:
-                $sqlStr .= " ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset";
-                $statement["offset"] = isset($q["offset"]) ? $q["offset"] : 0;
-                $statement["limit"] = isset($q["limit"]) ? $q["limit"] : 15;
-                $filter = array_merge($filter, ["%d", "%d"]);
-                break;
-            default:
-                $response->setCode(400);
-                return;
+            $sqlStr = <<<EOT
+SELECT r.*, u.username, 
+o.size AS "room_size", o.name AS "room_name", o.description AS "room_description",
+l.name AS "loc_name", l.location_id
+FROM reservations r
+INNER JOIN users u USING (user_id)
+INNER JOIN rooms o USING (room_id)
+INNER JOIN locations l USING (location_id)
+WHERE r.room_id = :room_id AND state != 0
+EOT;
+            $statement = [
+                "room_id" => $q["room"],
+            ];
+            $filter = ["%d"];
+
+            switch ($this->check($q)) {
+                case self::DATE:
+                    $sqlStr .= " AND date = :date";
+                    $statement["date"] = $q["date"];
+                    $filter[] =  "%s";
+                    break;
+                case self::SET:
+                    $sqlStr .= " ORDER BY date DESC, start_time DESC LIMIT :limit OFFSET :offset";
+                    $statement["offset"] = isset($q["offset"]) ? $q["offset"] : 0;
+                    $statement["limit"] = isset($q["limit"]) ? $q["limit"] : 15;
+                    $filter = array_merge($filter, ["%d", "%d"]);
+                    break;
+                default:
+                    $response->setCode(400);
+                    return;
+            }
+        } else {
+            $sqlStr = <<<EOT
+SELECT r.*, u.username, 
+o.size AS "room_size", o.name AS "room_name", o.description AS "room_description",
+l.name AS "loc_name", l.location_id
+FROM reservations r
+INNER JOIN users u USING (user_id)
+INNER JOIN rooms o USING (room_id)
+INNER JOIN locations l USING (location_id)
+WHERE r.res_id = :res_id AND state != 0
+EOT;
+            $statement = [
+                "res_id" => $q["reservation"],
+            ];
+            $filter = ["%d"];
         }
 
         $prepare = $this->sql->prepare($statement, $filter);
